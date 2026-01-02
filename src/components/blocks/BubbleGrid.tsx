@@ -33,8 +33,37 @@ const Bubble: React.FC<BubbleProps> = React.memo(({
   addTask,
 }) => {
   const [newTaskName, setNewTaskName] = useState('');
+  const [touchDragging, setTouchDragging] = useState(false);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const isStart = block && block.startSlot === slotIndex;
   const task = block ? tasks.find(t => t.id === block.taskId) : null;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (!block) return;
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    setTouchDragging(true);
+  }, [block]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!block || !touchStartRef.current) return;
+    
+    const touchEnd = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+    const yDiff = touchStartRef.current.y - touchEnd.y;
+    
+    // If dragged down significantly (at least 30px), extend the task
+    if (yDiff > 30) {
+      // Simulate drop to next slot
+      const mockEvent = {
+        preventDefault: () => {},
+        dataTransfer: { getData: () => block.id }
+      } as unknown as React.DragEvent;
+      onDrop(mockEvent, slotIndex + 1);
+      toast.success('Task extended');
+    }
+    
+    setTouchDragging(false);
+    touchStartRef.current = null;
+  }, [block, slotIndex, onDrop]);
 
   return (
     <div 
@@ -56,8 +85,11 @@ const Bubble: React.FC<BubbleProps> = React.memo(({
             whileTap={{ scale: 0.9 }}
             draggable={!!block}
             onDragStart={(e) => block && onDragStart(e as unknown as React.DragEvent, block.id)}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
             className={cn(
-              "relative z-10 h-[26px] w-[26px] rounded-full border transition-all duration-300 shadow-sm",
+              "relative z-10 h-[26px] w-[26px] rounded-full border transition-all duration-300 shadow-sm cursor-grab active:cursor-grabbing",
+              touchDragging && "scale-110",
               block 
                 ? "border-transparent shadow-sm" 
                 : "border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5"
@@ -85,12 +117,27 @@ const Bubble: React.FC<BubbleProps> = React.memo(({
                 {formatSlotTime(slotIndex)}
               </p>
               {block ? (
-                <button
-                  onClick={() => removeBlock(block.id)}
-                  className="flex w-full items-center rounded px-2 py-1.5 text-[13px] text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  Remove
-                </button>
+                <>
+                  <button
+                    onClick={() => removeBlock(block.id)}
+                    className="flex w-full items-center rounded px-2 py-1.5 text-[13px] text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    Remove
+                  </button>
+                  <button
+                    onClick={() => {
+                      const mockEvent = {
+                        preventDefault: () => {},
+                        dataTransfer: { getData: () => block.id }
+                      } as unknown as React.DragEvent;
+                      onDrop(mockEvent, slotIndex + 1);
+                      toast.success('Task extended');
+                    }}
+                    className="flex w-full items-center rounded px-2 py-1.5 text-[13px] text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    Extend +10min
+                  </button>
+                </>
               ) : (
                 <>
                   {tasks.map(task => (
