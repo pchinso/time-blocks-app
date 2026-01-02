@@ -333,9 +333,9 @@ export const BubbleGrid: React.FC = () => {
         </button>
       </div>
 
-      <div ref={gridRef} className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_1fr_140px] gap-x-4 gap-y-4 lg:gap-y-0 overflow-hidden bg-background p-2 lg:p-4 rounded-xl">
+      <div ref={gridRef} className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_1fr_140px] gap-x-4 gap-y-4 lg:gap-y-0 overflow-y-auto lg:overflow-hidden bg-background p-2 lg:p-4 rounded-xl">
         {/* Morning Column */}
-        <div className="flex flex-col gap-y-1 pt-2 lg:pt-6 px-2 lg:px-0">
+        <div className="flex flex-col gap-y-1 pt-2 lg:pt-6 px-2 lg:px-0 min-h-min">
           {morningHours.map((hour, i) => (
             <HourRow
               key={i}
@@ -354,7 +354,7 @@ export const BubbleGrid: React.FC = () => {
         </div>
 
         {/* Evening Column */}
-        <div className="flex flex-col gap-y-1 pt-2 lg:pt-6 px-2 lg:px-0">
+        <div className="flex flex-col gap-y-1 pt-2 lg:pt-6 px-2 lg:px-0 min-h-min">
           {eveningHours.map((hour, i) => (
             <HourRow
               key={i + 12}
@@ -373,7 +373,7 @@ export const BubbleGrid: React.FC = () => {
         </div>
 
         {/* Categories Column */}
-        <div className="flex flex-col gap-y-0.5 overflow-hidden lg:overflow-y-auto pl-0 lg:pl-3 border-l-0 lg:border-l border-border/80 pt-2 lg:pt-6 px-2 lg:px-0">
+        <div className="flex flex-col gap-y-0.5 overflow-hidden lg:overflow-y-auto pl-0 lg:pl-3 border-l-0 lg:border-l border-border/80 pt-2 lg:pt-6 px-2 lg:px-0 min-h-min">
           <h2 className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Categories</h2>
           {tasks.map(task => (
             <div key={task.id} className="flex flex-col gap-0 rounded-md border bg-card p-0.5 px-1 shadow-sm hover:shadow-md transition-shadow">
