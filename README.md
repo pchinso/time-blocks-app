@@ -1,73 +1,55 @@
-# React + TypeScript + Vite
+# Time Blocks App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A modern, intuitive time management application built with React, TypeScript, and Tailwind CSS. Plan your day in 10-minute intervals with a visual bubble grid interface.
 
-Currently, two official plugins are available:
+##  Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **10-Minute Time Grid**  Visualize your entire day from 5:00 AM to 4:00 AM the next day, divided into 6 time slots per hour
+- **Bubble-Based Planning**  Click any bubble to create a task, or drag to extend tasks across multiple time slots
+- **Visual Task Merging**  Continuous time blocks for the same task automatically merge into a single visual entity
+- **Dynamic Categories**  Create unlimited task categories on-the-fly with auto-assigned colors
+- **Drag-to-Extend**  Seamlessly drag task bubbles to adjacent empty slots to extend task duration
+- **Overlap Prevention**  Prevents overlapping tasks for a clean schedule
+- **High-Resolution PDF Export**  Export your daily schedule as a professional PDF
+- **Dark/Light Mode**  Glassmorphism-inspired theme system
+- **Floating Labels**  Category names appear above active time blocks
+- **Fully Responsive**  Optimized for desktop, tablet, and mobile
 
-## React Compiler
+##  Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- React 19 with TypeScript
+- Vite
+- Tailwind CSS v4
+- Zustand (State Management)
+- Framer Motion (Animations)
+- Radix UI (Components)
+- html-to-image + jsPDF (PDF Export)
+- date-fns (Date Utilities)
 
-## Expanding the ESLint configuration
+##  Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+`ash
+git clone https://github.com/pchinso/time-blocks-app.git
+cd time-blocks-app
+npm install
+npm run dev
+`
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+##  Deployment
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+Deploy easily to Vercel, Netlify, GitHub Pages, or any static hosting.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+##  How to Use
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1. Click empty bubbles to create tasks
+2. Drag to extend task duration
+3. View category totals in the sidebar
+4. Export as PDF with one click
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+##  License
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+MIT
+
+##  Author
+
+[pchinso](https://github.com/pchinso)
