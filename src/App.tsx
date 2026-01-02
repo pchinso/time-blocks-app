@@ -7,12 +7,14 @@ import { Toaster } from 'sonner';
 function App() {
   return (
     <ThemeProvider>
-      <div className="flex h-screen w-full overflow-hidden bg-background text-foreground">
-        <Sidebar />
-        <main className="relative flex flex-1 flex-col overflow-hidden">
-          <Dashboard />
-          <BottomNav />
-        </main>
+      <div className="flex h-screen w-full overflow-hidden bg-background text-foreground justify-center items-center">
+        <div className="flex h-full w-full max-w-[800px] max-h-[500px] overflow-hidden border shadow-2xl rounded-3xl bg-card">
+          <Sidebar />
+          <main className="relative flex flex-1 flex-col overflow-hidden">
+            <Dashboard />
+            <BottomNav />
+          </main>
+        </div>
         <Toaster position="top-center" richColors />
       </div>
     </ThemeProvider>

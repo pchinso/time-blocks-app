@@ -16,38 +16,39 @@ export const Sidebar: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <aside className="hidden h-screen w-64 flex-col border-r bg-card p-6 md:flex">
-      <div className="mb-8 flex items-center space-x-2">
-        <div className="h-8 w-8 rounded-lg bg-primary" />
-        <span className="text-xl font-bold tracking-tight">TimeBlocks</span>
+    <aside className="hidden h-full w-48 flex-col border-r bg-card p-4 md:flex">
+      <div className="mb-6 flex items-center space-x-2">
+        <div className="h-6 w-6 rounded-lg bg-primary" />
+        <span className="text-lg font-bold tracking-tight">TimeBlocks</span>
       </div>
       
-      <nav className="flex-1 space-y-2">
+      <nav className="flex-1 space-y-1">
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActive(item.id)}
             className={cn(
-              "flex w-full items-center space-x-3 rounded-xl px-4 py-3 transition-all",
+              "flex w-full items-center space-x-2 rounded-lg px-3 py-2 transition-all",
               active === item.id 
-                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                ? "bg-primary text-primary-foreground shadow-md shadow-primary/10" 
                 : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             )}
           >
-            <item.icon size={20} />
-            <span className="font-medium">{item.label}</span>
+            <item.icon size={16} />
+            <span className="text-sm font-medium">{item.label}</span>
           </button>
         ))}
       </nav>
 
-      <div className="mt-auto pt-6">
+      <div className="mt-auto pt-4">
         <Button
           variant="ghost"
-          className="w-full justify-start space-x-3"
+          size="sm"
+          className="w-full justify-start space-x-2"
           onClick={toggleTheme}
         >
-          {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-          <span>{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
+          {theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}
+          <span className="text-xs">{theme === 'light' ? 'Dark' : 'Light'}</span>
         </Button>
       </div>
     </aside>

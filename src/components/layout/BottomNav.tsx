@@ -14,18 +14,18 @@ export const BottomNav: React.FC = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden">
-      <div className="glass mx-4 mb-4 flex h-16 items-center justify-around rounded-2xl px-2">
+      <div className="glass mx-2 mb-2 flex h-12 items-center justify-around rounded-xl px-1">
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActive(item.id)}
             className={cn(
-              "flex flex-col items-center justify-center space-y-1 transition-colors",
+              "flex flex-col items-center justify-center transition-colors",
               active === item.id ? "text-primary" : "text-muted-foreground"
             )}
           >
-            <item.icon size={20} />
-            <span className="text-[10px] font-medium">{item.label}</span>
+            <item.icon size={16} />
+            <span className="text-[8px] font-medium">{item.label}</span>
           </button>
         ))}
       </div>
