@@ -314,26 +314,28 @@ export const BubbleGrid: React.FC = () => {
 
   return (
     <div className="flex h-full w-full flex-col bg-background pt-4 px-3 pb-3 overflow-hidden">
-      <div className="mb-2 px-2 flex items-center justify-end gap-2">
+      <div className="mb-2 px-2 flex items-center justify-end gap-1 lg:gap-2">
         <button
           onClick={handleExportPDF}
-          className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-[14px] font-bold text-primary hover:bg-primary/10 transition-colors border border-primary/20 shadow-sm"
+          className="flex items-center gap-1 lg:gap-2 rounded-lg px-2 lg:px-3 py-1.5 text-[12px] lg:text-[14px] font-bold text-primary hover:bg-primary/10 transition-colors border border-primary/20 shadow-sm"
         >
-          <Printer className="h-4 w-4" />
-          Export PDF
+          <Printer className="h-3 lg:h-4 w-3 lg:w-4" />
+          <span className="hidden sm:inline">Export PDF</span>
+          <span className="sm:hidden">PDF</span>
         </button>
         <button
           onClick={handleReset}
-          className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-[14px] font-bold text-destructive hover:bg-destructive/10 transition-colors border border-destructive/20 shadow-sm"
+          className="flex items-center gap-1 lg:gap-2 rounded-lg px-2 lg:px-3 py-1.5 text-[12px] lg:text-[14px] font-bold text-destructive hover:bg-destructive/10 transition-colors border border-destructive/20 shadow-sm"
         >
-          <Trash2 className="h-4 w-4" />
-          Reset All
+          <Trash2 className="h-3 lg:h-4 w-3 lg:w-4" />
+          <span className="hidden sm:inline">Reset All</span>
+          <span className="sm:hidden">Reset</span>
         </button>
       </div>
 
-      <div ref={gridRef} className="grid flex-1 grid-cols-[1fr_1fr_140px] gap-x-4 overflow-hidden bg-background p-4 rounded-xl">
+      <div ref={gridRef} className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_1fr_140px] gap-x-4 gap-y-4 lg:gap-y-0 overflow-hidden bg-background p-2 lg:p-4 rounded-xl">
         {/* Morning Column */}
-        <div className="flex flex-col gap-y-1 pt-6">
+        <div className="flex flex-col gap-y-1 pt-2 lg:pt-6 px-2 lg:px-0">
           {morningHours.map((hour, i) => (
             <HourRow
               key={i}
@@ -352,7 +354,7 @@ export const BubbleGrid: React.FC = () => {
         </div>
 
         {/* Evening Column */}
-        <div className="flex flex-col gap-y-1 pt-6">
+        <div className="flex flex-col gap-y-1 pt-2 lg:pt-6 px-2 lg:px-0">
           {eveningHours.map((hour, i) => (
             <HourRow
               key={i + 12}
@@ -371,7 +373,7 @@ export const BubbleGrid: React.FC = () => {
         </div>
 
         {/* Categories Column */}
-        <div className="flex flex-col gap-y-0.5 overflow-hidden pl-3 border-l border-border/80 pt-6">
+        <div className="flex flex-col gap-y-0.5 overflow-hidden lg:overflow-y-auto pl-0 lg:pl-3 border-l-0 lg:border-l border-border/80 pt-2 lg:pt-6 px-2 lg:px-0">
           <h2 className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Categories</h2>
           {tasks.map(task => (
             <div key={task.id} className="flex flex-col gap-0 rounded-md border bg-card p-0.5 px-1 shadow-sm hover:shadow-md transition-shadow">
