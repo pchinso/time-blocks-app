@@ -32,3 +32,12 @@ export const getSlotFromTime = (date: Date) => {
   
   return Math.floor(diff / SLOT_DURATION);
 };
+
+export const formatDuration = (slots: number) => {
+  const totalMinutes = slots * SLOT_DURATION;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hours === 0) return `${minutes}m`;
+  if (minutes === 0) return `${hours}h`;
+  return `${hours}h ${minutes}m`;
+};

@@ -10,19 +10,15 @@ interface BlockState {
   updateBlock: (id: string, updates: Partial<TimeBlock>) => boolean;
   extendBlock: (id: string, targetSlot: number) => boolean;
   isSlotAvailable: (start: number, end: number, excludeId?: string) => boolean;
-  addTask: (task: Task) => void;
+  addTask: (name: string) => string;
+  resetAll: () => void;
 }
 
 export const useBlockStore = create<BlockState>()(
   persist(
     (set, get) => ({
       blocks: [],
-      tasks: [
-        { id: '1', name: 'Work', color: '#3b82f6' },
-        { id: '2', name: 'Rest', color: '#10b981' },
-        { id: '3', name: 'Exercise', color: '#f59e0b' },
-        { id: '4', name: 'Learning', color: '#8b5cf6' },
-      ],
+      tasks: [],
 
       isSlotAvailable: (start, end, excludeId) => {
         return !get().blocks.some((block) => {
@@ -84,10 +80,25 @@ export const useBlockStore = create<BlockState>()(
         return true;
       },
 
-      addTask: (task) => {
-        set((state) => ({
-          tasks: [...state.tasks, task],
-        }));
+      addTask: (name: string) => {
+        const existing = get().tasks.find(t => t.name.toLowerCase() === name.toLowerCase());
+        if (existing) return existing.id;
+
+        const id = crypto.randomUUID();
+        const colors = [
+          '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', 
+          '#ef4444', '#06b6d4', '#f43f5e', '#84cc16',
+          '#ec4899', '#6366f1', '#14b8a6', '#f97316'
+        ];
+        const color = colors[get().tasks.length % colors.length];
+        
+        const newTask = { id, name, color };
+        set(state => ({ tasks: [...state.tasks, newTask] }));
+        return id;
+      },
+
+      resetAll: () => {
+        set({ blocks: [], tasks: [] });
       },
     }),
     {
