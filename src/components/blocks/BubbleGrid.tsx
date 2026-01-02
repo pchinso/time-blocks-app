@@ -1,11 +1,13 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import { useBlockStore } from '@/store/useBlockStore';
 import { formatSlotTime, START_HOUR, formatDuration } from '@/lib/time-utils';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import * as Popover from '@radix-ui/react-popover';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Printer } from 'lucide-react';
+import { jsPDF } from 'jspdf';
+import * as htmlToImage from 'html-to-image';
 
 interface BubbleProps {
   slotIndex: number;
@@ -65,6 +67,11 @@ const Bubble: React.FC<BubbleProps> = React.memo(({
             }}
           >
             {!block && <Plus className="mx-auto h-2.5 w-2.5 text-muted-foreground/40" />}
+            {isStart && (
+              <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white pointer-events-none tracking-tighter">
+                {formatSlotTime(slotIndex)}
+              </span>
+            )}
           </motion.button>
         </Popover.Trigger>
 
@@ -194,6 +201,7 @@ const HourRow: React.FC<HourRowProps> = React.memo(({
 export const BubbleGrid: React.FC = () => {
   const { blocks, tasks, addBlock, removeBlock, extendBlock, addTask, resetAll } = useBlockStore();
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const gridRef = useRef<HTMLDivElement>(null);
 
   const hours = useMemo(() => Array.from({ length: 24 }).map((_, i) => (START_HOUR + i) % 24), []);
   const morningHours = useMemo(() => hours.slice(0, 12), [hours]);
@@ -253,9 +261,67 @@ export const BubbleGrid: React.FC = () => {
     }
   }, [resetAll]);
 
+  const handleExportPDF = useCallback(async () => {
+    if (!gridRef.current) {
+      toast.error('Grid element not found');
+      return;
+    }
+
+    const toastId = toast.loading('Preparing high-resolution PDF...');
+
+    try {
+      const element = gridRef.current;
+      
+      // Use html-to-image which handles modern CSS (oklch, oklab) much better
+      const dataUrl = await htmlToImage.toPng(element, {
+        quality: 1.0,
+        pixelRatio: 2,
+        backgroundColor: getComputedStyle(document.body).backgroundColor,
+      });
+
+      const img = new Image();
+      img.src = dataUrl;
+      
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'px',
+        format: [img.width / 2, img.height / 2]
+      });
+
+      pdf.addImage(
+        dataUrl, 
+        'PNG', 
+        0, 
+        0, 
+        img.width / 2, 
+        img.height / 2,
+        undefined,
+        'FAST'
+      );
+      
+      pdf.save(`daily-bubbles-${new Date().toISOString().split('T')[0]}.pdf`);
+      
+      toast.success('PDF exported successfully', { id: toastId });
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      toast.error(`Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { id: toastId });
+    }
+  }, []);
+
   return (
     <div className="flex h-full w-full flex-col bg-background pt-4 px-3 pb-3 overflow-hidden">
-      <div className="mb-2 px-2 flex items-center justify-end">
+      <div className="mb-2 px-2 flex items-center justify-end gap-2">
+        <button
+          onClick={handleExportPDF}
+          className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-[14px] font-bold text-primary hover:bg-primary/10 transition-colors border border-primary/20 shadow-sm"
+        >
+          <Printer className="h-4 w-4" />
+          Export PDF
+        </button>
         <button
           onClick={handleReset}
           className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-[14px] font-bold text-destructive hover:bg-destructive/10 transition-colors border border-destructive/20 shadow-sm"
@@ -265,7 +331,7 @@ export const BubbleGrid: React.FC = () => {
         </button>
       </div>
 
-      <div className="grid flex-1 grid-cols-[1fr_1fr_140px] gap-x-4 overflow-hidden">
+      <div ref={gridRef} className="grid flex-1 grid-cols-[1fr_1fr_140px] gap-x-4 overflow-hidden bg-background p-4 rounded-xl">
         {/* Morning Column */}
         <div className="flex flex-col gap-y-1 pt-6">
           {morningHours.map((hour, i) => (
@@ -305,15 +371,15 @@ export const BubbleGrid: React.FC = () => {
         </div>
 
         {/* Categories Column */}
-        <div className="flex flex-col gap-y-1 overflow-y-auto pl-3 border-l border-border/80 pt-6">
-          <h2 className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider mb-1">Categories</h2>
+        <div className="flex flex-col gap-y-0.5 overflow-hidden pl-3 border-l border-border/80 pt-6">
+          <h2 className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-0.5">Categories</h2>
           {tasks.map(task => (
-            <div key={task.id} className="flex flex-col gap-0.5 rounded-lg border bg-card p-2 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center gap-1.5">
-                <div className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: task.color }} />
-                <span className="text-[13px] font-bold truncate">{task.name}</span>
+            <div key={task.id} className="flex flex-col gap-0 rounded-md border bg-card p-0.5 px-1 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center gap-1">
+                <div className="h-1 w-1 rounded-full" style={{ backgroundColor: task.color }} />
+                <span className="text-[9px] font-bold truncate">{task.name}</span>
               </div>
-              <span className="text-[12px] font-semibold text-muted-foreground ml-4">
+              <span className="text-[9px] font-semibold text-muted-foreground ml-2">
                 {getTaskTotalTime(task.id)}
               </span>
             </div>
