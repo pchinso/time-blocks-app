@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, LayoutGrid, Settings, User } from 'lucide-react';
+import { LayoutGrid, Settings, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
