@@ -15,6 +15,18 @@ A modern, intuitive time management application built with React, TypeScript, an
 - **Floating Labels**  Category names appear above active time blocks
 - **Fully Responsive**  Optimized for desktop, tablet, and mobile
 
+### Running Mode
+- **Real-time Sync**: Switch to Running to lock editing and sync the grid to the current time.
+- **Current-Time Highlight**: The active time bubble gently pulses (scale + brightness).
+- **Minutes Left**: The current-time bubble shows remaining minutes until the next slot.
+
+### Personalization
+- **Blink Rate Control**: Adjust the pulsing speed in Settings (0.5s–5s). Persisted.
+
+### Templates
+- **Save Template**: Save the current grid (tasks + blocks) from the Grid header.
+- **Profile Management**: Load or delete saved templates from the Profile section.
+
 ##  Tech Stack
 
 - React 19 with TypeScript
@@ -28,12 +40,12 @@ A modern, intuitive time management application built with React, TypeScript, an
 
 ##  Getting Started
 
-`ash
+```bash
 git clone https://github.com/pchinso/time-blocks-app.git
 cd time-blocks-app
 npm install
 npm run dev
-`
+```
 
 ##  Deployment
 
@@ -43,8 +55,10 @@ Deploy easily to Vercel, Netlify, GitHub Pages, or any static hosting.
 
 1. Click empty bubbles to create tasks
 2. Drag to extend task duration
-3. View category totals in the sidebar
-4. Export as PDF with one click
+3. Toggle Running to sync to the current time (read-only grid)
+4. See minutes remaining inside the current-time bubble
+5. Save Template from the Grid header; load/delete in Profile
+6. Tune blink rate in Settings
 
 ##  License
 
