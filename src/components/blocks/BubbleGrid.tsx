@@ -1,11 +1,11 @@
-import React, { useState, useCallback, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { useBlockStore } from '@/store/useBlockStore';
-import { formatSlotTime, START_HOUR, formatDuration } from '@/lib/time-utils';
+import { formatSlotTime, START_HOUR, formatDuration, getSlotFromTime, getSlotTime, SLOT_DURATION } from '@/lib/time-utils';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import * as Popover from '@radix-ui/react-popover';
-import { Plus, Trash2, Printer } from 'lucide-react';
+import { Plus, Trash2, Printer, Play, Pause, Save } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import * as htmlToImage from 'html-to-image';
 
@@ -19,6 +19,9 @@ interface BubbleProps {
   handleBubbleClick: (slotIndex: number, taskId: string) => void;
   removeBlock: (id: string) => void;
   addTask: (name: string) => string;
+  isRunningMode: boolean;
+  currentTimeSlot: number | null;
+  nowTs: number | null;
 }
 
 const Bubble: React.FC<BubbleProps> = React.memo(({
@@ -31,12 +34,26 @@ const Bubble: React.FC<BubbleProps> = React.memo(({
   handleBubbleClick,
   removeBlock,
   addTask,
+  isRunningMode,
+  currentTimeSlot,
+  nowTs,
 }) => {
   const [newTaskName, setNewTaskName] = useState('');
   const [touchDragging, setTouchDragging] = useState(false);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
   const isStart = block && block.startSlot === slotIndex;
   const task = block ? tasks.find(t => t.id === block.taskId) : null;
+  const isCurrentTimeSlot = currentTimeSlot === slotIndex;
+  const { blinkRate } = useBlockStore();
+
+  // Remaining minutes until slot change
+  let remainingMins: number | null = null;
+  if (isCurrentTimeSlot && isRunningMode && nowTs) {
+    const start = getSlotTime(slotIndex).getTime();
+    const end = start + SLOT_DURATION * 60_000;
+    const diffMs = end - nowTs;
+    remainingMins = Math.max(0, Math.ceil(diffMs / 60_000));
+  }
 
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
     if (!block) return;
@@ -81,27 +98,45 @@ const Bubble: React.FC<BubbleProps> = React.memo(({
       <Popover.Root>
         <Popover.Trigger asChild>
           <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            draggable={!!block}
-            onDragStart={(e) => block && onDragStart(e as unknown as React.DragEvent, block.id)}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
+            whileHover={!isRunningMode ? { scale: 1.1 } : undefined}
+            whileTap={!isRunningMode ? { scale: 0.9 } : undefined}
+            draggable={!!block && !isRunningMode}
+            onDragStart={(e) => block && !isRunningMode && onDragStart(e as unknown as React.DragEvent, block.id)}
+            onTouchStart={!isRunningMode ? handleTouchStart : undefined}
+            onTouchEnd={!isRunningMode ? handleTouchEnd : undefined}
+            disabled={isRunningMode}
             className={cn(
-              "relative z-10 h-[26px] w-[26px] rounded-full border transition-all duration-300 shadow-sm cursor-grab active:cursor-grabbing",
+              "relative z-10 h-[26px] w-[26px] rounded-full border transition-all duration-300 shadow-sm",
+              !isRunningMode && "cursor-grab active:cursor-grabbing",
+              isRunningMode && "cursor-default",
               touchDragging && "scale-110",
+              isCurrentTimeSlot && isRunningMode && "ring-2 ring-primary ring-offset-2",
               block 
                 ? "border-transparent shadow-sm" 
                 : "border-dashed border-muted-foreground/30 hover:border-primary/50 hover:bg-primary/5"
             )}
             style={{ 
-              backgroundColor: block ? tasks.find(t => t.id === block.taskId)?.color : 'transparent' 
+              backgroundColor: block ? tasks.find(t => t.id === block.taskId)?.color : 'transparent',
+              ...(isCurrentTimeSlot && isRunningMode && {
+                animation: `current-bubble-pulse ${blinkRate}s cubic-bezier(0.4, 0, 0.6, 1) infinite`,
+                willChange: 'transform, opacity, filter',
+              }),
             }}
           >
             {!block && <Plus className="mx-auto h-2.5 w-2.5 text-muted-foreground/40" />}
-            {isStart && (
+            {isStart && !(isCurrentTimeSlot && isRunningMode) && (
               <span className="absolute inset-0 flex items-center justify-center text-[9px] font-black text-white pointer-events-none tracking-tighter">
                 {formatSlotTime(slotIndex)}
+              </span>
+            )}
+            {isCurrentTimeSlot && isRunningMode && remainingMins !== null && (
+              <span
+                aria-label="minutes remaining in slot"
+                className="absolute inset-0 flex items-center justify-center pointer-events-none"
+              >
+                <span className="text-white text-[10px] drop-shadow-[0_1px_1px_rgba(0,0,0,0.9)]">
+                  {remainingMins}
+                </span>
               </span>
             )}
           </motion.button>
@@ -112,6 +147,7 @@ const Bubble: React.FC<BubbleProps> = React.memo(({
             className="z-50 w-40 rounded-lg border bg-popover p-2 shadow-lg animate-in fade-in zoom-in-95"
             sideOffset={2}
           >
+            {!isRunningMode && (
             <div className="grid gap-2">
               <p className="px-1 py-0.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
                 {formatSlotTime(slotIndex)}
@@ -169,6 +205,17 @@ const Bubble: React.FC<BubbleProps> = React.memo(({
                 </>
               )}
             </div>
+            )}
+            {isRunningMode && (
+              <div className="grid gap-2">
+                <p className="px-1 py-0.5 text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                  {formatSlotTime(slotIndex)}
+                </p>
+                <p className="px-1 py-0.5 text-[10px] text-muted-foreground">
+                  Running mode: Grid is read-only
+                </p>
+              </div>
+            )}
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>
@@ -199,6 +246,9 @@ interface HourRowProps {
   handleBubbleClick: (slotIndex: number, taskId: string) => void;
   removeBlock: (id: string) => void;
   addTask: (name: string) => string;
+  isRunningMode: boolean;
+  currentTimeSlot: number | null;
+  nowTs: number | null;
 }
 
 const HourRow: React.FC<HourRowProps> = React.memo(({
@@ -212,6 +262,9 @@ const HourRow: React.FC<HourRowProps> = React.memo(({
   handleBubbleClick,
   removeBlock,
   addTask,
+  isRunningMode,
+  currentTimeSlot,
+  nowTs,
 }) => {
   return (
     <div className="group flex items-center gap-1.5">
@@ -237,6 +290,9 @@ const HourRow: React.FC<HourRowProps> = React.memo(({
               handleBubbleClick={handleBubbleClick}
               removeBlock={removeBlock}
               addTask={addTask}
+              isRunningMode={isRunningMode}
+              currentTimeSlot={currentTimeSlot}
+              nowTs={nowTs}
             />
           );
         })}
@@ -246,13 +302,42 @@ const HourRow: React.FC<HourRowProps> = React.memo(({
 });
 
 export const BubbleGrid: React.FC = () => {
-  const { blocks, tasks, addBlock, removeBlock, extendBlock, addTask, resetAll } = useBlockStore();
+  const { blocks, tasks, addBlock, removeBlock, extendBlock, addTask, resetAll, isRunningMode, setRunningMode, saveTemplate } = useBlockStore();
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
+  const [currentTimeSlot, setCurrentTimeSlot] = useState<number | null>(null);
+  const [nowTs, setNowTs] = useState<number | null>(null);
   const gridRef = useRef<HTMLDivElement>(null);
 
   const hours = useMemo(() => Array.from({ length: 24 }).map((_, i) => (START_HOUR + i) % 24), []);
   const morningHours = useMemo(() => hours.slice(0, 12), [hours]);
   const eveningHours = useMemo(() => hours.slice(12, 24), [hours]);
+
+  // Track current time slot when in running mode
+  useEffect(() => {
+    if (!isRunningMode) {
+      setCurrentTimeSlot(null);
+      setNowTs(null);
+      return;
+    }
+
+    const updateCurrentTimeSlot = () => {
+      const now = new Date();
+      const slot = getSlotFromTime(now);
+      // console.debug('Current time slot:', slot, 'Time:', now.toLocaleTimeString());
+      setCurrentTimeSlot(slot);
+    };
+
+    // Update immediately
+    updateCurrentTimeSlot();
+    setNowTs(Date.now());
+
+    // Update every 10 seconds to stay synchronized
+    const interval = setInterval(updateCurrentTimeSlot, 10000);
+    // Per-second tick for remaining minutes display
+    const secondTick = setInterval(() => setNowTs(Date.now()), 1000);
+
+    return () => { clearInterval(interval); clearInterval(secondTick); };
+  }, [isRunningMode]);
 
   const getTaskTotalTime = useCallback((taskId: string) => {
     const totalSlots = blocks
@@ -262,6 +347,8 @@ export const BubbleGrid: React.FC = () => {
   }, [blocks]);
 
   const handleBubbleClick = useCallback((slotIndex: number, taskId: string) => {
+    if (isRunningMode) return; // Prevent changes in running mode
+    
     const existingBlock = blocks.find(b => slotIndex >= b.startSlot && slotIndex < b.endSlot);
     if (existingBlock) return;
 
@@ -274,7 +361,7 @@ export const BubbleGrid: React.FC = () => {
     if (id) {
       toast.success(`Task added at ${formatSlotTime(slotIndex)}`);
     }
-  }, [blocks, addBlock]);
+  }, [blocks, addBlock, isRunningMode]);
 
   const onDragStart = useCallback((e: React.DragEvent, blockId: string) => {
     setDraggedBlockId(blockId);
@@ -361,23 +448,58 @@ export const BubbleGrid: React.FC = () => {
 
   return (
     <div className="flex h-full w-full flex-col bg-background pt-4 px-3 pb-3 overflow-hidden">
-      <div className="mb-2 px-2 flex items-center justify-end gap-1 lg:gap-2">
-        <button
-          onClick={handleExportPDF}
-          className="flex items-center gap-1 lg:gap-2 rounded-lg px-2 lg:px-3 py-1.5 text-[12px] lg:text-[14px] font-bold text-primary hover:bg-primary/10 transition-colors border border-primary/20 shadow-sm"
+      <div className="mb-2 px-2 flex items-center justify-between gap-1 lg:gap-2">
+        <div className="flex items-center gap-1 lg:gap-2">
+          <button
+            onClick={() => {
+              const name = prompt('Template name');
+              if (!name) return;
+              const id = saveTemplate(name);
+              if (id) toast.success('Template saved');
+              else toast.error('Please enter a valid name');
+            }}
+            className="flex items-center gap-1 lg:gap-2 rounded-lg px-2 lg:px-3 py-1.5 text-[12px] lg:text-[14px] font-bold transition-colors border shadow-sm text-primary hover:bg-primary/10 border-primary/20"
+          >
+            <Save className="h-3 lg:h-4 w-3 lg:w-4" />
+            <span className="hidden sm:inline">Save Template</span>
+            <span className="sm:hidden">Save</span>
+          </button>
+
+          <button
+          onClick={() => {
+            setRunningMode(!isRunningMode);
+            toast.success(isRunningMode ? 'Planning mode activated' : 'Running mode activated');
+          }}
+          className={cn(
+            "flex items-center gap-1 lg:gap-2 rounded-lg px-2 lg:px-3 py-1.5 text-[12px] lg:text-[14px] font-bold transition-colors border shadow-sm",
+            isRunningMode 
+              ? "bg-primary text-primary-foreground border-primary/20" 
+              : "text-primary hover:bg-primary/10 border-primary/20"
+          )}
         >
-          <Printer className="h-3 lg:h-4 w-3 lg:w-4" />
-          <span className="hidden sm:inline">Export PDF</span>
-          <span className="sm:hidden">PDF</span>
+          {isRunningMode ? <Pause className="h-3 lg:h-4 w-3 lg:w-4" /> : <Play className="h-3 lg:h-4 w-3 lg:w-4" />}
+          <span>{isRunningMode ? 'Running' : 'Plan'}</span>
         </button>
-        <button
-          onClick={handleReset}
-          className="flex items-center gap-1 lg:gap-2 rounded-lg px-2 lg:px-3 py-1.5 text-[12px] lg:text-[14px] font-bold text-destructive hover:bg-destructive/10 transition-colors border border-destructive/20 shadow-sm"
-        >
-          <Trash2 className="h-3 lg:h-4 w-3 lg:w-4" />
-          <span className="hidden sm:inline">Reset All</span>
-          <span className="sm:hidden">Reset</span>
-        </button>
+        </div>
+
+        <div className="flex items-center gap-1 lg:gap-2">
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center gap-1 lg:gap-2 rounded-lg px-2 lg:px-3 py-1.5 text-[12px] lg:text-[14px] font-bold text-primary hover:bg-primary/10 transition-colors border border-primary/20 shadow-sm"
+          >
+            <Printer className="h-3 lg:h-4 w-3 lg:w-4" />
+            <span className="hidden sm:inline">Export PDF</span>
+            <span className="sm:hidden">PDF</span>
+          </button>
+          <button
+            onClick={handleReset}
+            className="flex items-center gap-1 lg:gap-2 rounded-lg px-2 lg:px-3 py-1.5 text-[12px] lg:text-[14px] font-bold text-destructive hover:bg-destructive/10 transition-colors border border-destructive/20 shadow-sm"
+          >
+            <Trash2 className="h-3 lg:h-4 w-3 lg:w-4" />
+            <span className="hidden sm:inline">Reset All</span>
+            <span className="sm:hidden">Reset</span>
+          </button>
+        </div>
       </div>
 
       <div ref={gridRef} className="flex flex-1 flex-col lg:grid lg:grid-cols-[1fr_1fr_140px] gap-x-4 gap-y-4 lg:gap-y-0 overflow-y-auto lg:overflow-hidden bg-background p-2 lg:p-4 rounded-xl">
@@ -396,6 +518,9 @@ export const BubbleGrid: React.FC = () => {
               handleBubbleClick={handleBubbleClick}
               removeBlock={removeBlock}
               addTask={addTask}
+              isRunningMode={isRunningMode}
+              currentTimeSlot={currentTimeSlot}
+              nowTs={nowTs}
             />
           ))}
         </div>
@@ -415,6 +540,9 @@ export const BubbleGrid: React.FC = () => {
               handleBubbleClick={handleBubbleClick}
               removeBlock={removeBlock}
               addTask={addTask}
+              isRunningMode={isRunningMode}
+              currentTimeSlot={currentTimeSlot}
+              nowTs={nowTs}
             />
           ))}
         </div>

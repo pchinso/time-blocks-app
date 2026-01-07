@@ -2,9 +2,25 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { TimeBlock, Task } from '../types';
 
+interface GridTemplate {
+  id: string;
+  name: string;
+  createdAt: string;
+  blocks: TimeBlock[];
+  tasks: Task[];
+}
+
 interface BlockState {
   blocks: TimeBlock[];
   tasks: Task[];
+  isRunningMode: boolean;
+  blinkRate: number; // in seconds
+  setRunningMode: (isRunning: boolean) => void;
+  setBlinkRate: (rate: number) => void;
+  templates: GridTemplate[];
+  saveTemplate: (name: string) => string | null;
+  loadTemplate: (id: string) => boolean;
+  deleteTemplate: (id: string) => void;
   addBlock: (block: Omit<TimeBlock, 'id'>) => string | null;
   removeBlock: (id: string) => void;
   updateBlock: (id: string, updates: Partial<TimeBlock>) => boolean;
@@ -19,6 +35,48 @@ export const useBlockStore = create<BlockState>()(
     (set, get) => ({
       blocks: [],
       tasks: [],
+      isRunningMode: false,
+      blinkRate: 1.5, // default 1.5 seconds
+      templates: [],
+
+      setRunningMode: (isRunning) => {
+        set({ isRunningMode: isRunning });
+      },
+
+      setBlinkRate: (rate) => {
+        set({ blinkRate: rate });
+      },
+
+      saveTemplate: (name) => {
+        const trimmed = name.trim();
+        if (!trimmed) return null;
+        const id = crypto.randomUUID();
+        const snapshot: GridTemplate = {
+          id,
+          name: trimmed,
+          createdAt: new Date().toISOString(),
+          // Deep copy to avoid later mutations affecting template
+          blocks: JSON.parse(JSON.stringify(get().blocks)),
+          tasks: JSON.parse(JSON.stringify(get().tasks)),
+        };
+        set((state) => ({ templates: [snapshot, ...state.templates] }));
+        return id;
+      },
+
+      loadTemplate: (id) => {
+        const tpl = get().templates.find(t => t.id === id);
+        if (!tpl) return false;
+        // Replace current state with template snapshot
+        set({
+          tasks: JSON.parse(JSON.stringify(tpl.tasks)),
+          blocks: JSON.parse(JSON.stringify(tpl.blocks)),
+        });
+        return true;
+      },
+
+      deleteTemplate: (id) => {
+        set((state) => ({ templates: state.templates.filter(t => t.id !== id) }));
+      },
 
       isSlotAvailable: (start, end, excludeId) => {
         return !get().blocks.some((block) => {

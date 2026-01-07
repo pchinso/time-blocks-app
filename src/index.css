@@ -47,6 +47,28 @@
     from { height: var(--radix-accordion-content-height); }
     to { height: 0; }
   }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+      filter: brightness(1);
+    }
+    50% {
+      opacity: 0.7;
+      transform: scale(1.15);
+      filter: brightness(1.5);
+    }
+  }
+  
+  @keyframes pulse-ring {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.5;
+    }
+  }
 }
 
 @layer utilities {
@@ -145,4 +167,16 @@
 
 .dark .glass {
   @apply bg-black/20 backdrop-blur-md border border-white/10 shadow-xl;
+}
+
+/* Ensure the current-time pulse is globally available (outside @theme) */
+@keyframes current-bubble-pulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(1.12);
+    filter: brightness(1.4);
+  }
 }

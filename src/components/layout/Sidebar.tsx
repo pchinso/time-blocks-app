@@ -1,12 +1,11 @@
 import React from 'react';
-import { Calendar, LayoutGrid, Settings, User, Moon, Sun } from 'lucide-react';
+import { LayoutGrid, Settings, User, Moon, Sun } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
 
 const navItems = [
   { icon: LayoutGrid, label: 'Grid', id: 'grid' },
-  { icon: Calendar, label: 'Plan', id: 'plan' },
   { icon: User, label: 'Profile', id: 'profile' },
   { icon: Settings, label: 'Settings', id: 'settings' },
 ];
@@ -14,6 +13,12 @@ const navItems = [
 export const Sidebar: React.FC = () => {
   const [active, setActive] = React.useState('grid');
   const { theme, toggleTheme } = useTheme();
+
+  const handleNavClick = (id: string) => {
+    setActive(id);
+    // Dispatch custom event for navigation
+    window.dispatchEvent(new CustomEvent('navigate', { detail: id }));
+  };
 
   return (
     <aside className="hidden h-full w-48 flex-col border-r bg-card p-4 md:flex">
@@ -26,7 +31,7 @@ export const Sidebar: React.FC = () => {
         {navItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => setActive(item.id)}
+            onClick={() => handleNavClick(item.id)}
             className={cn(
               "flex w-full items-center space-x-2 rounded-lg px-3 py-2 transition-all",
               active === item.id 
